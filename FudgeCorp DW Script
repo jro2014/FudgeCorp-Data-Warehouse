@@ -1,0 +1,283 @@
+/****** Object:  Database ist722_hhkhan_od2_dw    Script Date: 6/9/2020 9:33:24 PM ******/
+/*
+Kimball Group, The Microsoft Data Warehouse Toolkit
+Generate a database from the datamodel worksheet, version: 4
+
+You can use this Excel workbook as a data modeling tool during the logical design phase of your project.
+As discussed in the book, it is in some ways preferable to a real data modeling tool during the inital design.
+We expect you to move away from this spreadsheet and into a real modeling tool during the physical design phase.
+The authors provide this macro so that the spreadsheet isn't a dead-end. You can 'import' into your
+data modeling tool by generating a database using this script, then reverse-engineering that database into
+your tool.
+
+Uncomment the next lines if you want to drop and create the database
+*/
+/*
+DROP DATABASE ist722_hhkhan_od2_dw
+GO
+CREATE DATABASE ist722_hhkhan_od2_dw
+GO
+ALTER DATABASE ist722_hhkhan_od2_dw
+SET RECOVERY SIMPLE
+GO
+*/
+USE ist722_hhkhan_od2_dw
+;
+IF EXISTS (SELECT Name from sys.extended_properties where Name = 'Description')
+    EXEC sys.sp_dropextendedproperty @name = 'Description'
+EXEC sys.sp_addextendedproperty @name = 'Description', @value = 'Default description - you should change this.'
+;
+
+
+
+
+
+-- Create a schema to hold user views (set schema name on home page of workbook).
+/*
+-- It would be good to do this only if the schema doesn't exist already.
+GO
+CREATE SCHEMA FudgeCorp
+GO
+*/
+
+
+/* Drop table FudgeCorp.FactOrderFullfillment */
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = OBJECT_ID(N'FudgeCorp.FactOrderFullfillment') AND OBJECTPROPERTY(id, N'IsUserTable') = 1)
+DROP TABLE FudgeCorp.FactOrderFullfillment
+;
+
+/* Drop table FudgeCorp.DimProductFM */
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = OBJECT_ID(N'FudgeCorp.DimProductFM') AND OBJECTPROPERTY(id, N'IsUserTable') = 1)
+DROP TABLE FudgeCorp.DimProductFM
+;
+
+
+/* Drop table FudgeCorp.DimDate */
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = OBJECT_ID(N'FudgeCorp.DimDate') AND OBJECTPROPERTY(id, N'IsUserTable') = 1)
+DROP TABLE FudgeCorp.DimDate
+;
+
+/* Drop table FudgeCorp.DimCustomerFM */
+IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id = OBJECT_ID(N'FudgeCorp.DimCustomerFM') AND OBJECTPROPERTY(id, N'IsUserTable') = 1)
+DROP TABLE FudgeCorp.DimCustomerFM
+;
+
+/* Create table FudgeCorp.DimDate */
+CREATE TABLE FudgeCorp.DimDate (
+   [DateKey]  int   NOT NULL
+,  [Date]  date   NULL
+,  [FullDateUSA]  nchar(11)   NOT NULL
+,  [DayOfWeek]  tinyint   NOT NULL
+,  [DayName]  nchar(10)   NOT NULL
+,  [DayOfMonth]  tinyint   NOT NULL
+,  [DayOfYear]  smallint   NOT NULL
+,  [WeekOfYear]  tinyint   NOT NULL
+,  [MonthName]  nchar(10)   NOT NULL
+,  [MonthOfYear]  tinyint   NOT NULL
+,  [Quarter]  tinyint   NOT NULL
+,  [QuarterName]  nchar(10)   NOT NULL
+,  [Year]  smallint   NOT NULL
+,  [IsWeekday]  bit  DEFAULT 0 NOT NULL
+, CONSTRAINT [PK_FudgeCorp.DimDate] PRIMARY KEY CLUSTERED
+( [DateKey] )
+) ON [PRIMARY]
+;
+
+INSERT INTO FudgeCorp.DimDate (DateKey, Date, FullDateUSA, DayOfWeek, DayName, DayOfMonth, DayOfYear, WeekOfYear, MonthName, MonthOfYear, Quarter, QuarterName, Year, IsWeekday)
+VALUES (-1, '', 'Unk date', 0, 'Unk date', 0, 0, 0, 'Unk month', 0, 0, 'Unk qtr', 0, 0)
+;
+
+-- User-oriented view definition
+/*
+GO
+IF EXISTS (select * from sys.views where object_id=OBJECT_ID(N'[FudgeCorp].[Date]'))
+DROP VIEW [FudgeCorp].[Date]
+GO
+CREATE VIEW [FudgeCorp].[Date] AS
+SELECT [DateKey] AS [DateKey]
+, [Date] AS [Date]
+, [FullDateUSA] AS [FullDateUSA]
+, [DayOfWeek] AS [DayOfWeek]
+, [DayName] AS [DayName]
+, [DayOfMonth] AS [DayOfMonth]
+, [DayOfYear] AS [DayOfYear]
+, [WeekOfYear] AS [WeekOfYear]
+, [MonthName] AS [MonthName]
+, [MonthOfYear] AS [MonthOfYear]
+, [Quarter] AS [Quarter]
+, [QuarterName] AS [QuarterName]
+, [Year] AS [Year]
+, [IsWeekday] AS [IsWeekday]
+FROM FudgeCorp.DimDate
+GO
+*/
+
+
+
+
+/* Create table FudgeCorp.DimCustomerFM */
+CREATE TABLE FudgeCorp.DimCustomerFM (
+   [CustomerKey]  int IDENTITY  NOT NULL
+,  [CustomerID]  int   NOT NULL
+,  [CustomerEmail]  nvarchar(100)   NOT NULL
+,  [CustomerName]  nvarchar(100)   NOT NULL
+,  [CustomerCity]  nvarchar(50)   NOT NULL
+,  [CustomerState]  nvarchar(2)   NOT NULL
+,  [CustomerZip]  nvarchar(20)  DEFAULT 'N/A' NOT NULL
+,  [RowIsCurrent]  nchar(1)  DEFAULT 'True' NOT NULL
+,  [RowStartDate]  datetime   NOT NULL
+,  [RowEndDate]  datetime  DEFAULT '12/31/9999' NOT NULL
+,  [RowChangeReason]  nvarchar(200)   NOT NULL
+, CONSTRAINT [PK_FudgeCorp.DimCustomerFM] PRIMARY KEY CLUSTERED
+( [CustomerKey] )
+) ON [PRIMARY]
+;
+
+SET IDENTITY_INSERT FudgeCorp.DimCustomerFM ON
+;
+INSERT INTO FudgeCorp.DimCustomerFM (CustomerKey, CustomerID, CustomerEmail, CustomerName, CustomerCity, CustomerState, CustomerZip, RowIsCurrent, RowStartDate, RowEndDate, RowChangeReason)
+VALUES (-1, -1, 'Unknown', 'Unknown', 'Unknown', 'Unknown', 'Unknown', 'Y', '12/31/1899', '12/31/9999', 'N/A')
+;
+SET IDENTITY_INSERT FudgeCorp.DimCustomerFM OFF
+;
+
+-- User-oriented view definition
+GO
+IF EXISTS (select * from sys.views where object_id=OBJECT_ID(N'[FudgeCorp].[DimCustomerFM]'))
+DROP VIEW [FudgeCorp].[DimCustomerFM]
+GO
+CREATE VIEW [FudgeCorp].[DimCustomerFM] AS
+SELECT [CustomerKey] AS [CustomerKey]
+, [CustomerID] AS [CustomerID]
+, [CustomerEmail] AS [CustomerEmail]
+, [CustomerName] AS [CustomerName]
+, [CustomerCity] AS [CustomerCity]
+, [CustomerState] AS [CustomerState]
+, [CustomerZip] AS [CustomerZip]
+, [RowIsCurrent] AS [Row Is Current]
+, [RowStartDate] AS [Row Start Date]
+, [RowEndDate] AS [Row End Date]
+, [RowChangeReason] AS [Row Change Reason]
+FROM FudgeCorp.DimCustomerFM
+GO
+
+
+
+
+/* Create table FudgeCorp.DimProductFM */
+CREATE TABLE FudgeCorp.DimProductFM (
+   [ProductKey]  int IDENTITY  NOT NULL
+,  [ProductID]  int   NOT NULL
+,  [ProductName]  nvarchar(50)  DEFAULT 'N/A' NOT NULL
+,  [ProductDept]  nvarchar(20)  DEFAULT 'N/A' NOT NULL
+,  [ProductDescription]  nvarchar(1000)  DEFAULT 'N/A' NOT NULL
+,  [RowIsCurrent]  nchar(1)   NOT NULL
+,  [RowStartDate]  datetime   NOT NULL
+,  [RowEndDate]  datetime  DEFAULT '12/31/9999' NOT NULL
+,  [RowChangeReason]  nvarchar(200)   NOT NULL
+, CONSTRAINT [PK_FudgeCorp.DimProductFM] PRIMARY KEY CLUSTERED
+( [ProductKey] )
+) ON [PRIMARY]
+;
+
+SET IDENTITY_INSERT FudgeCorp.DimProductFM ON
+;
+INSERT INTO FudgeCorp.DimProductFM (ProductKey, ProductID, ProductName, ProductDept, ProductDescription, RowIsCurrent, RowStartDate, RowEndDate, RowChangeReason)
+VALUES (-1, -1, 'Unknown', 'Unknown', 'Unknown', 'Y', '12/31/1899', '12/31/9999', 'N/A')
+;
+SET IDENTITY_INSERT FudgeCorp.DimProductFM OFF
+;
+
+-- User-oriented view definition
+/*
+GO
+IF EXISTS (select * from sys.views where object_id=OBJECT_ID(N'[FudgeCorp].[DimProductFM]'))
+DROP VIEW [FudgeCorp].[DimProductFM]
+GO
+CREATE VIEW [FudgeCorp].[DimProductFM] AS
+SELECT [ProductKey] AS [ProductKey]
+, [ProductID] AS [ProductID]
+, [ProductName] AS [ProductName]
+, [ProductDept] AS [ProductDept]
+, [ProductDescription] AS [ProductDescription]
+, [RowIsCurrent] AS [Row Is Current]
+, [RowStartDate] AS [Row Start Date]
+, [RowEndDate] AS [Row End Date]
+, [RowChangeReason] AS [Row Change Reason]
+FROM FudgeCorp.DimProductFM
+GO
+*/
+
+
+
+
+/* Create table FudgeCorp.FactOrderFullfillment */
+CREATE TABLE FudgeCorp.FactOrderFullfillment (
+   [CustomerKey]  int  DEFAULT -1 NOT NULL
+,  [ProductKey]  int  DEFAULT -1 NOT NULL
+,  [OrderDateKey]  int  DEFAULT -1 NOT NULL
+,  [ShippedDateKey]  int  DEFAULT -1 NOT NULL
+,  [OrderID]  int  DEFAULT -1 NOT NULL
+,  [LagTime]  int   NULL
+,  [Company]  nvarchar(2)   NOT NULL
+, CONSTRAINT [PK_FudgeCorp.FactOrderFullfillment] PRIMARY KEY NONCLUSTERED
+( [OrderID], [Company] )
+) ON [PRIMARY]
+;
+
+-- User-oriented view definition
+/*GO
+IF EXISTS (select * from sys.views where object_id=OBJECT_ID(N'[FudgeCorp].[FactOrderFullfillment]'))
+DROP VIEW [FudgeCorp].[FactOrderFullfillment]
+GO
+CREATE VIEW [FudgeCorp].[FactOrderFullfillment] AS
+SELECT [CustomerKey] AS [CustomerKey]
+, [ProductKey] AS [ProductKey]
+, [OrderDateKey] AS [OrderDateKey]
+, [ShippedDateKey] AS [ShippedDateKey]
+, [OrderID] AS [OrderID]
+, [LagTime] AS [LagTime]
+, [Company] AS [Company]
+FROM FudgeCorp.FactOrderFullfillment
+GO
+*/
+
+ALTER TABLE FudgeCorp.FactOrderFullfillment ADD CONSTRAINT
+   FK_FudgeCorp_FactOrderFullfillment_CustomerKey FOREIGN KEY
+   (
+   CustomerKey
+   ) REFERENCES DimCustomerFM
+   ( CustomerKey )
+     ON UPDATE  NO ACTION
+     ON DELETE  NO ACTION
+;
+
+ALTER TABLE FudgeCorp.FactOrderFullfillment ADD CONSTRAINT
+   FK_FudgeCorp_FactOrderFullfillment_ProductKey FOREIGN KEY
+   (
+   ProductKey
+   ) REFERENCES DimProductFM
+   ( ProductKey )
+     ON UPDATE  NO ACTION
+     ON DELETE  NO ACTION
+;
+
+ALTER TABLE FudgeCorp.FactOrderFullfillment ADD CONSTRAINT
+   FK_FudgeCorp_FactOrderFullfillment_OrderDateKey FOREIGN KEY
+   (
+   OrderDateKey
+   ) REFERENCES DimDate
+   ( DateKey )
+     ON UPDATE  NO ACTION
+     ON DELETE  NO ACTION
+;
+
+ALTER TABLE FudgeCorp.FactOrderFullfillment ADD CONSTRAINT
+   FK_FudgeCorp_FactOrderFullfillment_ShippedDateKey FOREIGN KEY
+   (
+   ShippedDateKey
+   ) REFERENCES DimDate
+   ( DateKey )
+     ON UPDATE  NO ACTION
+     ON DELETE  NO ACTION
+;
